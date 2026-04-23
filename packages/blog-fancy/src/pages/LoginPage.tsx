@@ -15,6 +15,7 @@ export function LoginPage() {
     newPassword: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(''); // 成功提示独立出来
   const [loading, setLoading] = useState(false);
   const { setTokens, setUser } = useAuthStore();
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -48,12 +50,17 @@ export function LoginPage() {
         navigate('/home');
       } else if (mode === 'forgot') {
         await authApi.forgotPassword(form.email);
+        setSuccess('验证码已发送到邮箱，请查收');
         setMode('reset');
-        setError('验证码已发送到邮箱，请查收');
       } else if (mode === 'reset') {
+        if (form.newPassword !== form.confirmPassword) {
+          setError('两次密码不一致');
+          setLoading(false);
+          return;
+        }
         await authApi.resetPassword(form.code, form.newPassword);
+        setSuccess('密码重置成功，请使用新密码登录');
         setMode('login');
-        setError('密码重置成功，请使用新密码登录');
       }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -65,6 +72,13 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const switchMode = (m: typeof mode) => {
+    setMode(m);
+    setError('');
+    setSuccess('');
+    setForm({ email: m === 'reset' ? form.email : form.email, password: '', confirmPassword: '', code: '', newPassword: '' });
   };
 
   const inputClass = `
@@ -172,6 +186,9 @@ export function LoginPage() {
 
             {mode === 'reset' && (
               <>
+                <div className="px-3 py-2 rounded-xl text-sm" style={{ backgroundColor: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)' }}>
+                  重置密码：{form.email}
+                </div>
                 <div className="relative">
                   <Mail
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
@@ -201,12 +218,32 @@ export function LoginPage() {
                     required
                   />
                 </div>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  />
+                  <input
+                    type="password"
+                    value={form.confirmPassword}
+                    onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                    className={inputClass}
+                    placeholder="确认新密码"
+                    required
+                  />
+                </div>
               </>
             )}
 
             {error && (
               <p className="text-sm text-center" style={{ color: '#ef4444' }}>
                 {error}
+              </p>
+            )}
+
+            {success && (
+              <p className="text-sm text-center font-medium" style={{ color: '#22c55e' }}>
+                {success}
               </p>
             )}
 
@@ -236,21 +273,21 @@ export function LoginPage() {
           >
             {mode === 'login' && (
               <>
-                <button onClick={() => setMode('forgot')} className="hover:underline mr-4">
+                <button onClick={() => switchMode('forgot')} className="hover:underline mr-4">
                   忘记密码
                 </button>
-                <button onClick={() => setMode('register')} className="hover:underline">
+                <button onClick={() => switchMode('register')} className="hover:underline">
                   没有账号？立即注册
                 </button>
               </>
             )}
             {mode === 'register' && (
-              <button onClick={() => setMode('login')} className="hover:underline">
+              <button onClick={() => switchMode('login')} className="hover:underline">
                 已有账号？登录
               </button>
             )}
             {(mode === 'forgot' || mode === 'reset') && (
-              <button onClick={() => setMode('login')} className="hover:underline">
+              <button onClick={() => switchMode('login')} className="hover:underline">
                 返回登录
               </button>
             )}
