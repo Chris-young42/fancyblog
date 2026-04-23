@@ -1,0 +1,118 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique @db.VarChar(255)
+  username      String    @unique @db.VarChar(50)
+  passwordHash  String    @db.VarChar(255)
+  nickname      String?   @db.VarChar(100)
+  avatar        String?   @db.Text
+  role          String    @default("user") @db.VarChar(20)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  refreshTokens RefreshToken[]
+  passwordResetCodes PasswordResetCode[]
+  posts        BlogPost[]
+  comments     Comment[]
+  postLikes    PostLike[]
+  following    Follow[]      @relation("follower")
+  followers    Follow[]      @relation("following")
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement())
+  token       String   @unique @db.VarChar(512)
+  userId      Int
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetCode {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  code      String    @db.VarChar(6)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HeaderNav {
+  id        Int      @id @default(autoincrement())
+  label     String   @db.VarChar(50)
+  path      String   @db.VarChar(255)
+  category  String?  @db.VarChar(50)
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(255)
+  content   String   @db.LongText
+  summary   String?  @db.Text
+  coverImage String? @db.Text
+  category  String   @db.VarChar(50)
+  tags      String   @db.VarChar(500)
+  published Boolean  @default(false)
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  postLikes  PostLike[]
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+}

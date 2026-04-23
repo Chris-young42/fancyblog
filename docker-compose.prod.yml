@@ -1,0 +1,79 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: blog-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-blog_db}
+      MYSQL_USER: ${MYSQL_USER:-blog_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-blog_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./packages/server
+      dockerfile: Dockerfile
+    container_name: blog-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://${MYSQL_USER:-blog_user}:${MYSQL_PASSWORD:-blog_password}@mysql:3306/${MYSQL_DATABASE:-blog_db}?charset=utf8mb4
+      PORT: 3000
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-this-access-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-this-refresh-secret}
+      SMTP_HOST: ${SMTP_HOST:-smtp.qq.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  frontend_fancy:
+    build:
+      context: ./packages/blog-fancy
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: blog-frontend-fancy
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_FANCY_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend_admin:
+    build:
+      context: ./packages/blog-mannagement
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: blog-frontend-admin
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_ADMIN_PORT:-8081}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  uploads_data:
