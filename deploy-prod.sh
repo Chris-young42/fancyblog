@@ -34,6 +34,9 @@ docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build
 echo "[deploy] Running prisma migrations..."
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm --no-deps backend pnpm exec prisma migrate deploy
 
+echo "[deploy] Seeding database..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm --no-deps backend pnpm exec prisma db seed
+
 echo "[deploy] Services status:"
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
 
