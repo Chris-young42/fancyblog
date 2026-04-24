@@ -150,16 +150,6 @@ export function LoginPage() {
             </button>
           </form>
         </div>
-
-        <p className="text-center mt-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          <a
-            href={`${import.meta.env.VITE_BLOG_URL}/login`}
-            className="hover:underline"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            返回博客
-          </a>
-        </p>
       </motion.div>
     </div>
   );

@@ -61,6 +61,13 @@ export function Navbar() {
     navigate('/login');
   };
 
+  const getNavLink = (header: HeaderNav) => {
+    if (header.category) {
+      return `/category/${encodeURIComponent(header.category)}`;
+    }
+    return header.path;
+  };
+
   const handleSearchResultClick = (postId: number) => {
     setShowSearchResults(false);
     setSearchQuery('');
@@ -114,11 +121,7 @@ export function Navbar() {
               headers?.map((header: HeaderNav) => (
                 <Link
                   key={header.id}
-                  to={
-                    header.category
-                      ? `/category/${encodeURIComponent(header.category)}`
-                      : header.path
-                  }
+                  to={getNavLink(header)}
                   className="nav-link"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
@@ -412,11 +415,7 @@ export function Navbar() {
                   headers?.map((header: HeaderNav) => (
                     <Link
                       key={header.id}
-                      to={
-                        header.category
-                          ? `/category/${encodeURIComponent(header.category)}`
-                          : header.path
-                      }
+                      to={getNavLink(header)}
                       onClick={() => setMobileMenuOpen(false)}
                       className="block px-4 py-3 rounded-xl transition-colors"
                       style={{
