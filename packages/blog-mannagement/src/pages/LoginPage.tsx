@@ -153,7 +153,7 @@ export function LoginPage() {
 
         <p className="text-center mt-6 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           <a
-            href="http://localhost:5173"
+            href={`${import.meta.env.VITE_BLOG_URL}/login`}
             className="hover:underline"
             style={{ color: 'var(--color-primary)' }}
           >
