@@ -24,7 +24,9 @@ services:
       - blog-net
 
   db-init:
-    image: hell-backend
+    build:
+      context: ./packages/server
+      dockerfile: Dockerfile
     container_name: blog-db-init
     restart: "no"
     command: ["sh", "-c", "for i in $(seq 1 30); do mysqladmin ping -h mysql -u ${MYSQL_USER} -p\"${MYSQL_PASSWORD}\" --silent && break || sleep 2; done && npx prisma db push --skip-generate && node prisma/seed.js"]
@@ -42,7 +44,9 @@ services:
       - blog-net
 
   backend:
-    image: hell-backend
+    build:
+      context: ./packages/server
+      dockerfile: Dockerfile
     container_name: blog-backend
     restart: unless-stopped
     env_file:
@@ -70,7 +74,9 @@ services:
       - blog-net
 
   frontend:
-    image: hell-frontend
+    build:
+      context: ./packages/blog-fancy
+      dockerfile: Dockerfile
     container_name: blog-frontend
     restart: unless-stopped
     ports:
@@ -82,7 +88,9 @@ services:
       - blog-net
 
   admin:
-    image: hell-frontend_admin
+    build:
+      context: ./packages/blog-mannagement
+      dockerfile: Dockerfile
     container_name: blog-admin
     restart: unless-stopped
     ports:
